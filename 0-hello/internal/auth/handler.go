@@ -2,6 +2,7 @@ package auth
 
 import (
 	"0-hello/configs"
+	"0-hello/pkg/request"
 	"0-hello/pkg/response"
 	"fmt"
 	"net/http"
@@ -26,6 +27,14 @@ func NewAuthHandler(router *http.ServeMux, deps AuthHandlerDeps) {
 func (handler *AuthHandler) Login() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Login")
+
+		body, err := request.HandleBody[LoginRequest](&w, r)
+		if err != nil {
+			response.Json(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		fmt.Println(*body)
+
 		resp := LoginResponse{
 			Token: handler.Config.Auth.Secret,
 		}
@@ -36,5 +45,17 @@ func (handler *AuthHandler) Login() http.HandlerFunc {
 func (handler *AuthHandler) Register() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Register")
+
+		body, err := request.HandleBody[RegisterRequest](&w, r)
+		if err != nil {
+			response.Json(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		fmt.Println(*body)
+
+		resp := RegisterResponse{
+			Token: handler.Config.Auth.Secret,
+		}
+		response.Json(w, resp, http.StatusOK)
 	}
 }

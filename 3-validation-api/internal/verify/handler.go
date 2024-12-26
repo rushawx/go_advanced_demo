@@ -2,8 +2,9 @@ package verify
 
 import (
 	"3-validation-api/configs"
-	"encoding/json"
-	"io"
+	"3-validation-api/pkg/request"
+	"3-validation-api/pkg/response"
+	"fmt"
 	"net/http"
 	"net/smtp"
 	"net/textproto"
@@ -31,26 +32,19 @@ func NewVerifyHandler(router *http.ServeMux, deps VerifyHandlerDeps) {
 
 func (handler *VerifyHandler) Send() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		body, err := io.ReadAll(r.Body)
+		fmt.Println("Send")
+
+		body, err := request.HandleBody[SendRequest](&w, r)
 		if err != nil {
 			http.Error(w, "Error reading request body", http.StatusBadRequest)
 			return
 		}
 
-		defer r.Body.Close()
-
-		var requestData struct {
-			To string `json:"to"`
-		}
-		if err := json.Unmarshal(body, &requestData); err != nil {
-			http.Error(w, "Error parsing request body", http.StatusBadRequest)
-			return
-		}
-
 		verificationUUID := uuid.New().String()
+		fmt.Println("Verification UUID:", verificationUUID)
 
 		e := email.Email{
-			To:      []string{requestData.To},
+			To:      []string{body.Email},
 			From:    handler.Config.Email.Username,
 			Subject: "Verify your email",
 			Text:    []byte("Click the link to verify your email"),
@@ -67,21 +61,37 @@ func (handler *VerifyHandler) Send() http.HandlerFunc {
 				handler.Config.Email.Host,
 			),
 		)
-		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Email sent to " + requestData.To))
+		fmt.Println("Email sent to " + body.Email)
+
+		data := map[string]string{"message": "Email sent to " + body.Email}
+		response.Json(w, data, http.StatusOK)
+
+		response.ToFile(body.Email, verificationUUID)
 	}
 }
 
 func (handler *VerifyHandler) Verify() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		hash := r.URL.Path[len("/verify/"):]
+		fmt.Println("Verify")
+
+		hash := r.PathValue("hash")
 		if hash == "" {
 			http.Error(w, "Missing hash parameter", http.StatusBadRequest)
 			return
 		}
-		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Verify " + hash))
+
+		body, err := request.HandleBody[VerifyRequest](&w, r)
+		if err != nil {
+			http.Error(w, "Error reading request body", http.StatusBadRequest)
+			return
+		}
+
+		if !response.FromFile(body.Email, hash) {
+			http.Error(w, "Invalid hash", http.StatusBadRequest)
+			return
+		}
+
+		data := map[string]string{"message": "Email verified"}
+		response.Json(w, data, http.StatusOK)
 	}
 }

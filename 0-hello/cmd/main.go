@@ -4,12 +4,15 @@ import (
 	"0-hello/configs"
 	"0-hello/internal/auth"
 	"0-hello/internal/hello"
+	"0-hello/pkg/db"
 	"fmt"
 	"net/http"
 )
 
 func main() {
 	conf := configs.LoadConfig()
+
+	_ = db.NewDb(conf)
 	fmt.Println(conf.Db.Dsn)
 
 	router := http.NewServeMux()

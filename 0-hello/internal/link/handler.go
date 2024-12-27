@@ -1,6 +1,7 @@
 package link
 
 import (
+	"0-hello/pkg/middleware"
 	"0-hello/pkg/request"
 	"0-hello/pkg/response"
 	"fmt"
@@ -23,9 +24,9 @@ func NewLinkHandler(router *http.ServeMux, deps LinkHandlerDeps) {
 		LinkRepository: deps.LinkRepository,
 	}
 
-	router.HandleFunc("POST /link", handler.Create())
-	router.HandleFunc("PATCH /link/{id}", handler.Update())
-	router.HandleFunc("DELETE /link/{id}", handler.Delete())
+	router.Handle("POST /link", middleware.IsAuthed(handler.Create()))
+	router.Handle("PATCH /link/{id}", middleware.IsAuthed(handler.Update()))
+	router.Handle("DELETE /link/{id}", middleware.IsAuthed(handler.Delete()))
 	router.HandleFunc("GET /{hash}", handler.GoTo())
 }
 
@@ -102,11 +103,11 @@ func (handler *LinkHandler) GoTo() http.HandlerFunc {
 		fmt.Println("GoTo")
 		hash := r.PathValue("hash")
 		link, err := handler.LinkRepository.GetByHash(hash)
-		fmt.Println(link.Url)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		fmt.Println(link.Url)
 		http.Redirect(w, r, link.Url, http.StatusMovedPermanently)
 	}
 }

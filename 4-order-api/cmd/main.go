@@ -4,6 +4,7 @@ import (
 	"4-order-api/configs"
 	"4-order-api/internal/product"
 	"4-order-api/pkg/db"
+	"4-order-api/pkg/middleware"
 	"fmt"
 	"net/http"
 )
@@ -20,9 +21,13 @@ func main() {
 
 	product.NewProductHandler(router, product.ProductHandlerDeps{ProductRepository: productRepository})
 
+	stack := middleware.Chain(
+		middleware.Logging,
+	)
+
 	server := http.Server{
 		Addr:    ":8080",
-		Handler: router,
+		Handler: stack(router),
 	}
 
 	fmt.Println("Server is listening on port 8080")

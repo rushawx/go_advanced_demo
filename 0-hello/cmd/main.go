@@ -4,6 +4,7 @@ import (
 	"0-hello/configs"
 	"0-hello/internal/auth"
 	"0-hello/internal/link"
+	"0-hello/internal/user"
 	"0-hello/pkg/db"
 	"0-hello/pkg/middleware"
 	"fmt"
@@ -19,8 +20,11 @@ func main() {
 	router := http.NewServeMux()
 
 	linkRepository := link.NewLinkRepository(db)
+	userRepository := user.NewUserRepository(db)
 
-	auth.NewAuthHandler(router, auth.AuthHandlerDeps{Config: conf})
+	authService := auth.NewAuthService(userRepository)
+
+	auth.NewAuthHandler(router, auth.AuthHandlerDeps{Config: conf, AuthService: authService})
 	link.NewLinkHandler(router, link.LinkHandlerDeps{LinkRepository: linkRepository})
 
 	stack := middleware.Chain(

@@ -74,7 +74,7 @@ func (handler *AuthHandler) Login() http.HandlerFunc {
 		fmt.Println(sessionId)
 
 		j := jwt.NewJWT(handler.Config.Auth.Secret)
-		token, err := j.Create(sessionId, body.Code)
+		token, err := j.Create(jwt.JWTData{SessionId: sessionId, Code: body.Code})
 		if err != nil {
 			response.Json(w, err.Error(), http.StatusInternalServerError)
 			return

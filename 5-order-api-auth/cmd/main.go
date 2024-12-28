@@ -17,16 +17,16 @@ func main() {
 	db := db.NewDb(conf)
 	fmt.Println(conf.Db.Dsn)
 
+	router := http.NewServeMux()
+
 	productRepository := product.NewProductRepository(db)
 	userRepository := user.NewUserRepository(db)
 	sessionRepository := user.NewSessionRepository(db)
 
-	router := http.NewServeMux()
-
 	authService := auth.NewAuthService(userRepository, sessionRepository)
 
-	product.NewProductHandler(router, product.ProductHandlerDeps{ProductRepository: productRepository})
 	auth.NewAuthHandler(router, auth.AuthHandlerDeps{Config: conf, AuthService: authService})
+	product.NewProductHandler(router, product.ProductHandlerDeps{ProductRepository: productRepository, Config: conf})
 
 	stack := middleware.Chain(
 		middleware.Logging,

@@ -1,6 +1,7 @@
 package product
 
 import (
+	"5-order-api-auth/configs"
 	"5-order-api-auth/pkg/middleware"
 	"5-order-api-auth/pkg/request"
 	"5-order-api-auth/pkg/response"
@@ -13,10 +14,12 @@ import (
 
 type ProductHandlerDeps struct {
 	ProductRepository *ProductRepository
+	Config            *configs.Config
 }
 
 type ProductHandler struct {
 	ProductRepository *ProductRepository
+	Config            *configs.Config
 }
 
 func NewProductHandler(router *http.ServeMux, deps ProductHandlerDeps) {
@@ -24,15 +27,27 @@ func NewProductHandler(router *http.ServeMux, deps ProductHandlerDeps) {
 		ProductRepository: deps.ProductRepository,
 	}
 
-	router.Handle("POST /product", middleware.IsAuthed(handler.Create()))
-	router.Handle("PATCH /product/{id}", middleware.IsAuthed(handler.Update()))
-	router.Handle("DELETE /product/{id}", middleware.IsAuthed(handler.Delete()))
+	router.Handle("POST /product", middleware.IsAuthed(handler.Create(), deps.Config))
+	router.Handle("PATCH /product/{id}", middleware.IsAuthed(handler.Update(), deps.Config))
+	router.Handle("DELETE /product/{id}", middleware.IsAuthed(handler.Delete(), deps.Config))
 	router.HandleFunc("GET /product/{id}", handler.GetById())
 }
 
 func (handler *ProductHandler) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Create")
+		sessionId, ok := r.Context().Value(middleware.ContextSessionIdKey).(string)
+		if !ok {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		fmt.Println("SessionId:", sessionId)
+		code, ok := r.Context().Value(middleware.CodeKey).(string)
+		if !ok {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		fmt.Println("Code:", code)
 		body, err := request.HandleBody[ProductCreateRequest](&w, r)
 		if err != nil {
 			return
@@ -50,6 +65,18 @@ func (handler *ProductHandler) Create() http.HandlerFunc {
 func (handler *ProductHandler) Update() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Update")
+		sessionId, ok := r.Context().Value(middleware.ContextSessionIdKey).(string)
+		if !ok {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		fmt.Println("SessionId:", sessionId)
+		code, ok := r.Context().Value(middleware.CodeKey).(string)
+		if !ok {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		fmt.Println("Code:", code)
 		body, err := request.HandleBody[ProductUpdateRequest](&w, r)
 		if err != nil {
 			return
@@ -76,6 +103,18 @@ func (handler *ProductHandler) Update() http.HandlerFunc {
 func (handler *ProductHandler) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Print("Delete")
+		sessionId, ok := r.Context().Value(middleware.ContextSessionIdKey).(string)
+		if !ok {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		fmt.Println("SessionId:", sessionId)
+		code, ok := r.Context().Value(middleware.CodeKey).(string)
+		if !ok {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		fmt.Println("Code:", code)
 		idString := r.PathValue("id")
 		id, err := strconv.Atoi(idString)
 		if err != nil {

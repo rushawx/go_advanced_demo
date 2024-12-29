@@ -3,23 +3,34 @@ package main
 import (
 	"0-hello/configs"
 	"0-hello/internal/auth"
-	"0-hello/internal/hello"
+	"0-hello/internal/link"
+	"0-hello/pkg/db"
+	"0-hello/pkg/middleware"
 	"fmt"
 	"net/http"
 )
 
 func main() {
 	conf := configs.LoadConfig()
+
+	db := db.NewDb(conf)
 	fmt.Println(conf.Db.Dsn)
 
 	router := http.NewServeMux()
 
+	linkRepository := link.NewLinkRepository(db)
+
 	auth.NewAuthHandler(router, auth.AuthHandlerDeps{Config: conf})
-	hello.NewHelloHandler(router)
+	link.NewLinkHandler(router, link.LinkHandlerDeps{LinkRepository: linkRepository})
+
+	stack := middleware.Chain(
+		middleware.CORS,
+		middleware.Logging,
+	)
 
 	server := http.Server{
 		Addr:    ":8081",
-		Handler: router,
+		Handler: stack(router),
 	}
 
 	fmt.Println("Server is listening on port 8081")

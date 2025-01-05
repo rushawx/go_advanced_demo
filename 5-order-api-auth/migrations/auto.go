@@ -1,8 +1,8 @@
 package main
 
 import (
-	"0-hello/internal/link"
-	"0-hello/internal/user"
+	"5-order-api-auth/internal/product"
+	"5-order-api-auth/internal/user"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -19,5 +19,5 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	db.AutoMigrate(&link.Link{}, &user.User{})
+	db.AutoMigrate(&product.Product{}, &user.User{}, &user.Session{})
 }

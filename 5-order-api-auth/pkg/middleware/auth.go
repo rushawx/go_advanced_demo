@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"0-hello/configs"
-	"0-hello/pkg/jwt"
+	"5-order-api-auth/configs"
+	"5-order-api-auth/pkg/jwt"
 	"context"
 	"fmt"
 	"net/http"
@@ -12,7 +12,8 @@ import (
 type key string
 
 const (
-	ContextEmailKey key = "ContextEmailKey"
+	ContextSessionIdKey key = "ContextSessionIdKey"
+	CodeKey             key = "CodeKey"
 )
 
 func writeUnauthorized(w http.ResponseWriter) {
@@ -35,7 +36,8 @@ func IsAuthed(next http.Handler, config *configs.Config) http.Handler {
 			writeUnauthorized(w)
 			return
 		}
-		ctx := context.WithValue(r.Context(), ContextEmailKey, data.Email)
+		ctx := context.WithValue(r.Context(), ContextSessionIdKey, data.SessionId)
+		ctx = context.WithValue(ctx, CodeKey, data.Code)
 		req := r.WithContext(ctx)
 		next.ServeHTTP(w, req)
 	})

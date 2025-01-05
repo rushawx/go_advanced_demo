@@ -1,4 +1,2 @@
-/0-hello/data
-/0-hello/.env
-/4-order-api/.env
-/4-order-api/data
+*/data
+*/.env

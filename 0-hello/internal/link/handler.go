@@ -2,6 +2,7 @@ package link
 
 import (
 	"0-hello/configs"
+	"0-hello/pkg/event"
 	"0-hello/pkg/middleware"
 	"0-hello/pkg/request"
 	"0-hello/pkg/response"
@@ -15,16 +16,19 @@ import (
 type LinkHandlerDeps struct {
 	LinkRepository *LinkRepository
 	Config         *configs.Config
+	EventBus       *event.EventBus
 }
 
 type LinkHandler struct {
 	LinkRepository *LinkRepository
 	Config         *configs.Config
+	EventBus       *event.EventBus
 }
 
 func NewLinkHandler(router *http.ServeMux, deps LinkHandlerDeps) {
 	handler := &LinkHandler{
 		LinkRepository: deps.LinkRepository,
+		EventBus:       deps.EventBus,
 	}
 
 	router.Handle("POST /link", middleware.IsAuthed(handler.Create(), deps.Config))
@@ -118,6 +122,10 @@ func (handler *LinkHandler) GoTo() http.HandlerFunc {
 			return
 		}
 		fmt.Println(link.Url)
+		go handler.EventBus.Publish(event.Event{
+			Type: event.EventLinkVisited,
+			Data: link.ID,
+		})
 		http.Redirect(w, r, link.Url, http.StatusMovedPermanently)
 	}
 }

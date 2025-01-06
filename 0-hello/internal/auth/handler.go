@@ -88,6 +88,6 @@ func (handler *AuthHandler) Register() http.HandlerFunc {
 		resp := RegisterResponse{
 			Token: token,
 		}
-		response.Json(w, resp, http.StatusOK)
+		response.Json(w, resp, http.StatusCreated)
 	}
 }
